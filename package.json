@@ -1,0 +1,21 @@
+{
+  "name": "credential-proxy",
+  "version": "1.0.0",
+  "description": "反向代理服務器，用於數位憑證發行機構與數位皮夾的互通",
+  "main": "proxy-server.js",
+  "scripts": {
+    "start": "node proxy-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "proxy",
+    "oid4vci",
+    "credentials",
+    "did"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "http-proxy": "^1.18.1"
+  }
+}

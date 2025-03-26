@@ -1,0 +1,14 @@
+{
+  "fido.moi.gov.tw": {
+    "target": "https://localhost:5000",
+    "name": "內政部自然人憑證"
+  },
+  "land.moi.gov.tw": {
+    "target": "https://localhost:5001",
+    "name": "內政部房產憑證"
+  },
+  "zuvi.io": {
+    "target": "https://localhost:5002",
+    "name": "租房 Dapp"
+  }
+}
