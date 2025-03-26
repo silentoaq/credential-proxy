@@ -372,24 +372,60 @@ function startServers() {
     cert: fs.readFileSync(certPath)
   };
   
+  // 嘗試在標準 HTTPS 端口 (443) 上運行
+  const STANDARD_HTTPS_PORT = 443;
+  const FALLBACK_HTTPS_PORT = process.env.HTTPS_PORT || 8080;
+  
   // 創建 HTTPS 服務器
   const httpsServer = https.createServer(httpsOptions, handleRequest);
-  const HTTPS_PORT = process.env.HTTPS_PORT || 8080;
-  httpsServer.listen(HTTPS_PORT, () => {
-    console.log(`HTTPS 反向代理服務器運行在 https://localhost:${HTTPS_PORT}`);
-    console.log(`管理界面: https://localhost:${HTTPS_PORT}/proxy-admin`);
+  
+  // 先嘗試在端口 443 上啟動（需要管理員權限）
+  httpsServer.listen(STANDARD_HTTPS_PORT, () => {
+    console.log(`✅ HTTPS 反向代理服務器運行在標準端口 (443)!`);
+    console.log(`現在可以直接訪問 https://fido.moi.gov.tw 無需輸入端口號`);
+    console.log(`管理界面: https://localhost/proxy-admin`);
+  }).on('error', (err) => {
+    if (err.code === 'EACCES') {
+      console.log(`⚠️ 無法在標準端口 (443) 上啟動，嘗試在 ${FALLBACK_HTTPS_PORT} 上啟動...`);
+      console.log('如果想使用標準端口 (443)，請以管理員權限重新運行:');
+      console.log('  Windows: 以系統管理員身份運行 PowerShell 或命令提示符，然後執行');
+      console.log('  > node https-proxy-server.js');
+      
+      // 在非標準端口上啟動
+      httpsServer.listen(FALLBACK_HTTPS_PORT, () => {
+        console.log(`HTTPS 反向代理服務器運行在 https://localhost:${FALLBACK_HTTPS_PORT}`);
+        console.log(`管理界面: https://localhost:${FALLBACK_HTTPS_PORT}/proxy-admin`);
+      });
+    } else {
+      console.error(`啟動 HTTPS 服務器時發生錯誤:`, err);
+    }
   });
   
   // 創建 HTTP 服務器 (僅用於重定向到 HTTPS)
   const httpServer = http.createServer((req, res) => {
-    const httpsUrl = `https://${req.headers.host}${req.url}`;
+    const host = req.headers.host?.split(':')[0] || 'localhost';
+    const httpsUrl = `https://${host}${req.url}`;
     res.writeHead(301, { Location: httpsUrl });
     res.end();
   });
   
-  const HTTP_PORT = process.env.HTTP_PORT || 8081;
-  httpServer.listen(HTTP_PORT, () => {
-    console.log(`HTTP 重定向服務器運行在 http://localhost:${HTTP_PORT}`);
+  // 嘗試在標準 HTTP 端口 (80) 上運行
+  const STANDARD_HTTP_PORT = 80;
+  const FALLBACK_HTTP_PORT = process.env.HTTP_PORT || 8081;
+  
+  httpServer.listen(STANDARD_HTTP_PORT, () => {
+    console.log(`✅ HTTP 重定向服務器運行在標準端口 (80)`);
+  }).on('error', (err) => {
+    if (err.code === 'EACCES') {
+      console.log(`⚠️ 無法在標準端口 (80) 上啟動 HTTP 服務器，嘗試在 ${FALLBACK_HTTP_PORT} 上啟動...`);
+      
+      // 在非標準端口上啟動
+      httpServer.listen(FALLBACK_HTTP_PORT, () => {
+        console.log(`HTTP 重定向服務器運行在 http://localhost:${FALLBACK_HTTP_PORT}`);
+      });
+    } else {
+      console.error(`啟動 HTTP 服務器時發生錯誤:`, err);
+    }
   });
 }
 
